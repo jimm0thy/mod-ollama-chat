@@ -15,6 +15,7 @@ uint32_t   g_BotReplyChance    = 10;
 uint32_t   g_MaxBotsToPick     = 2;
 std::string g_OllamaUrl        = "http://localhost:11434/api/generate";
 std::string g_OllamaModel      = "llama3.2:1b";
+std::unordered_map<uint64_t, uint32> botPersonalityList;
 
 // New configuration option: API max concurrent queries (0 means no limit)
 uint32_t   g_MaxConcurrentQueries = 0;
@@ -90,6 +91,30 @@ static std::vector<std::string> SplitString(const std::string& str, char delim)
     return tokens;
 }
 
+// Load Bot Personalities from Database
+static void LoadBotPersonalityList()
+{    
+    QueryResult result = CharacterDatabase.Query("SELECT guid,personality FROM mod_ollama_chat_personality");
+
+    if (!result)
+    {
+        return;
+    }
+    if (result->GetRowCount() == 0)
+    {
+        return;
+    }    
+
+    LOG_INFO("server.loading", "[Ollama Chat] Fetching Bot Personality List into array");
+
+    do
+    {
+        uint32 personalityBotGUID = result->Fetch()[0].Get<uint64_t>();
+        uint32 personalityBotType = result->Fetch()[1].Get<uint32>();
+        botPersonalityList[personalityBotGUID] = personalityBotType;
+    } while (result->NextRow());
+}
+
 void LoadOllamaChatConfig()
 {
     g_SayDistance       = sConfigMgr->GetOption<float>("OllamaChat.SayDistance", 30.0f);
@@ -146,4 +171,5 @@ void OllamaChatConfigWorldScript::OnStartup()
 {
     curl_global_init(CURL_GLOBAL_ALL);
     LoadOllamaChatConfig();
+    LoadBotPersonalityList();
 }
