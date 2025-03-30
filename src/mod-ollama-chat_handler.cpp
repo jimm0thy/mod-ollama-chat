@@ -481,13 +481,13 @@ const std::string WOW_CHEATSHEET = R"(
             botName, botLevel, botClass, personalityPrompt,
             playerLevel, playerClass, playerName, playerMessage,
             extraInfo, WOW_CHEATSHEET, CHEATSHEET_USAGE
-        );*/
+        );       */
 
         std::string prompt = fmt::format(
             "You are a World of Warcraft player in the Wrath of the Lich King expansion. "
             "Your character's name is {} and you are a level {} {}. Your Personality is '{}'. "
             "A level {} {} named {} said '{}' in the game chat. "
-            "Reply (under 15 words) relevant to the message and context. {} "            
+            "Reply (under 15 words) relevant to the message and context. {} "
             "Always prioritize sounding like a real human player.",
             botName, botLevel, botClass, personalityPrompt,
             playerLevel, playerClass, playerName, playerMessage,
@@ -497,4 +497,3 @@ const std::string WOW_CHEATSHEET = R"(
         return prompt;
     }
     
-
