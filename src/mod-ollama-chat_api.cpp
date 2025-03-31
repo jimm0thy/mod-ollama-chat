@@ -69,7 +69,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
 
     std::stringstream ss(responseBuffer);
     std::string line;
-    std::ostringstream extractedResponse;
+    std::ostringstream extractedResponse;    
 
     try
     {
@@ -77,7 +77,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
         {
             nlohmann::json jsonResponse = nlohmann::json::parse(line);
             if (jsonResponse.contains("response"))
-                extractedResponse << jsonResponse["response"].get<std::string>();
+                extractedResponse << jsonResponse["response"].get<std::string>();            
         }
     }
     catch (const std::exception& e)
@@ -99,7 +99,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
         return "I'm having trouble understanding.";
     }
 
-    LOG_INFO("server.loading", "Parsed bot response: {}", botReply);
+    LOG_INFO("server.loading", "Parsed bot response: {}", botReply);  
     return botReply;
 }
 
