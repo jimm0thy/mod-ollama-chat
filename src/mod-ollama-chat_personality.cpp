@@ -26,7 +26,17 @@ BotPersonalityType GetBotPersonality(Player* bot)
             {
                 uint32 newType = (urand(0, PERSONALITY_TYPES_COUNT - 1));
                 botPersonalities[botGuid] = static_cast<BotPersonalityType>(newType);
-                CharacterDatabase.Execute("INSERT INTO mod_ollama_chat_personality (guid, personality) VALUES ({}, {})", botGuid, newType);
+
+                QueryResult tableExists = CharacterDatabase.Query("SELECT * FROM information_schema.tables WHERE table_schema = 'acore_characters' AND table_name = 'mod_ollama_chat_personality' LIMIT 1;");
+                if (!tableExists)
+                {
+                    LOG_INFO("server.loading", "[Ollama Chat] Please source the required database table first");
+                    
+                }
+                else
+                {
+                    CharacterDatabase.Execute("INSERT INTO mod_ollama_chat_personality (guid, personality) VALUES ({}, {})", botGuid, newType);
+                }                
                 LOG_INFO("server.loading", "Generated new personality for bot {}: {}", bot->GetName(), botPersonalities[botGuid]);
             }
             else

@@ -93,7 +93,15 @@ static std::vector<std::string> SplitString(const std::string& str, char delim)
 
 // Load Bot Personalities from Database
 static void LoadBotPersonalityList()
-{    
+{
+    // Let's make sure our user has sourced the required sql file to add the new table
+    QueryResult tableExists = CharacterDatabase.Query("SELECT * FROM information_schema.tables WHERE table_schema = 'acore_characters' AND table_name = 'mod_ollama_chat_personality' LIMIT 1");
+    if (!tableExists)
+    {
+        LOG_ERROR("server.loading", "[Ollama Chat] Please source the required database table first");
+        return;
+    }
+
     QueryResult result = CharacterDatabase.Query("SELECT guid,personality FROM mod_ollama_chat_personality");
 
     if (!result)
