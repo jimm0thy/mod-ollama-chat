@@ -5,6 +5,7 @@
 #include <fmt/core.h>
 #include <sstream>
 #include <curl/curl.h>
+#include <nlohmann/json.hpp>
 
 // Global configuration variable definitions...
 float      g_SayDistance       = 30.0f;
@@ -56,23 +57,23 @@ std::vector<std::string> g_BlacklistCommands = {
     "talents",
     "reset",
     "autogear",
-    "ss ",
+    "ss",
     "trainer",
-    "rti ",
-    "rtsc ",
-    "do ",
-    "ll ",
-    "e ",
-    "ue ",
-    "nc ",
-    "open ",
-    "destroy "
-    "s ",
-    "b ",
-    "bank ",
-    "gb ",
-    "u ",
-    "co ",
+    "rti",
+    "rtsc",
+    "do",
+    "ll",
+    "e",
+    "ue",
+    "nc",
+    "open",
+    "destroy"
+    "s",
+    "b",
+    "bank",
+    "gb",
+    "u",
+    "co",
 };
 
 static std::vector<std::string> SplitString(const std::string& str, char delim)
@@ -121,6 +122,56 @@ static void LoadBotPersonalityList()
         uint32 personalityBotType = result->Fetch()[1].Get<uint32>();
         botPersonalityList[personalityBotGUID] = personalityBotType;
     } while (result->NextRow());
+}
+
+// Callback for cURL write function.
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
+{
+    std::string* responseBuffer = static_cast<std::string*>(userp);
+    size_t totalSize = size * nmemb;
+    responseBuffer->append(static_cast<char*>(contents), totalSize);
+    return totalSize;
+}
+
+// Pre-Load Ollama Model, Set Session and KeepAlive
+static void PreLoadOllamaModel()
+{
+    CURL* curl = curl_easy_init();
+    if (!curl)
+    {
+        LOG_INFO("server.loading", "Failed to initialize cURL.");       
+    }
+
+    std::string url = g_OllamaUrl;
+    std::string model = g_OllamaModel;
+    std::string sessionCookie = "session=AzerothCoreSession"; // Replace with your actual session cookie value
+
+    nlohmann::json requestData = {
+       {"model",  model},
+        {"keep_alive", -1}
+    };
+    std::string requestDataStr = requestData.dump();
+    std::string responseBuffer;
+    
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_COOKIESESSION, 1L);
+    curl_easy_setopt(curl, CURLOPT_COOKIE, sessionCookie.c_str()); 
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestDataStr.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, long(requestDataStr.length()));
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBuffer);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    if (res == CURLE_OK)
+    {
+        LOG_INFO("server.loading", "[Ollama Chat] Pre-Loaded Ollama Model: {}", g_OllamaModel);
+    }
+    else
+    {
+        LOG_INFO("server.loading", "[Ollama Chat] Unabled to Pre-Load Ollama Model or Set Cookie / TimeOut");
+    }
 }
 
 void LoadOllamaChatConfig()
@@ -180,4 +231,45 @@ void OllamaChatConfigWorldScript::OnStartup()
     curl_global_init(CURL_GLOBAL_ALL);
     LoadOllamaChatConfig();
     LoadBotPersonalityList();
+    PreLoadOllamaModel();
+}
+
+// Unload Ollama model to free up memory use
+void OllamaChatConfigWorldScript::OnShutdown()
+{
+    CURL* curl = curl_easy_init();
+    if (!curl)
+    {
+        LOG_INFO("server.loading", "Failed to initialize cURL.");
+    }
+
+    std::string url = g_OllamaUrl;
+    std::string model = g_OllamaModel;
+    std::string sessionCookie = "session=AzerothCoreSession"; // Replace with your actual session cookie value
+
+    nlohmann::json requestData = {
+       {"model",  model},
+        {"keep_alive", 0} // setting keep_alive to 0 will unload the model immediately
+    };
+    std::string requestDataStr = requestData.dump();
+    std::string responseBuffer;
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());    
+    curl_easy_setopt(curl, CURLOPT_COOKIE, sessionCookie.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestDataStr.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, long(requestDataStr.length()));
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBuffer);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    if (res == CURLE_OK)
+    {
+        LOG_INFO("server.loading", "[Ollama Chat] UnLoaded Ollama Model: {}", g_OllamaModel);
+    }
+    else
+    {
+        LOG_INFO("server.loading", "[Ollama Chat] Unabled to UnLoad Ollama Model");
+    }
 }
