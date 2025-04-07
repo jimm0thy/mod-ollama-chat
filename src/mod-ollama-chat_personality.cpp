@@ -31,12 +31,12 @@ BotPersonalityType GetBotPersonality(Player* bot)
                 if (!tableExists)
                 {
                     LOG_INFO("server.loading", "[Ollama Chat] Please source the required database table first");
-                    
+
                 }
                 else
                 {
                     CharacterDatabase.Execute("INSERT INTO mod_ollama_chat_personality (guid, personality) VALUES ({}, {})", botGuid, newType);
-                }                
+                }
                 LOG_INFO("server.loading", "Generated new personality for bot {}: {}", bot->GetName(), botPersonalities[botGuid]);
             }
             else

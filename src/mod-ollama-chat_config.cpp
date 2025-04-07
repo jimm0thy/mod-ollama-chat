@@ -21,6 +21,7 @@ std::unordered_map<uint64_t, uint32> botPersonalityList;
 // New configuration option: API max concurrent queries (0 means no limit)
 uint32_t   g_MaxConcurrentQueries = 0;
 
+bool       g_Enable                          = true;
 bool       g_EnableRandomChatter             = true;
 uint32_t   g_MinRandomInterval               = 45;
 uint32_t   g_MaxRandomInterval               = 180;
@@ -94,7 +95,7 @@ static std::vector<std::string> SplitString(const std::string& str, char delim)
 
 // Load Bot Personalities from Database
 static void LoadBotPersonalityList()
-{
+{   
     // Let's make sure our user has sourced the required sql file to add the new table
     QueryResult tableExists = CharacterDatabase.Query("SELECT * FROM information_schema.tables WHERE table_schema = 'acore_characters' AND table_name = 'mod_ollama_chat_personality' LIMIT 1");
     if (!tableExists)
@@ -188,6 +189,7 @@ void LoadOllamaChatConfig()
     // Load new configuration option for max concurrent queries.
     g_MaxConcurrentQueries = sConfigMgr->GetOption<uint32_t>("OllamaChat.MaxConcurrentQueries", 0);
 
+    g_Enable                          = sConfigMgr->GetOption<bool>("OllamaChat.Enable", true);
     g_EnableRandomChatter             = sConfigMgr->GetOption<bool>("OllamaChat.EnableRandomChatter", true);
     g_MinRandomInterval               = sConfigMgr->GetOption<uint32_t>("OllamaChat.MinRandomInterval", 45);
     g_MaxRandomInterval               = sConfigMgr->GetOption<uint32_t>("OllamaChat.MaxRandomInterval", 180);
@@ -212,11 +214,11 @@ void LoadOllamaChatConfig()
     g_queryManager.setMaxConcurrentQueries(g_MaxConcurrentQueries);
 
     LOG_INFO("server.loading",
-             "[mod-ollama-chat] Config loaded: SayDistance = {}, YellDistance = {}, "
+             "[mod-ollama-chat] Config loaded: Enabled = {}, SayDistance = {}, YellDistance = {}, "
              "GeneralDistance = {}, PlayerReplyChance = {}%, BotReplyChance = {}%, MaxBotsToPick = {}, "
              "Url = {}, Model = {}, MaxConcurrentQueries = {}, EnableRandomChatter = {}, MinRandInt = {}, MaxRandInt = {}, RandomChatterRealPlayerDistance = {}, "
              "RandomChatterBotCommentChance = {}. MaxConcurrentQueries = {}. Extra blacklist commands: {}",
-             g_SayDistance, g_YellDistance, g_GeneralDistance,
+             g_Enable, g_SayDistance, g_YellDistance, g_GeneralDistance,
              g_PlayerReplyChance, g_BotReplyChance, g_MaxBotsToPick,
              g_OllamaUrl, g_OllamaModel, g_MaxConcurrentQueries,
              g_EnableRandomChatter, g_MinRandomInterval, g_MaxRandomInterval, g_RandomChatterRealPlayerDistance,
