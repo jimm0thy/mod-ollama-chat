@@ -10,6 +10,8 @@
 #include <queue>
 #include <future>
 #include "mod-ollama-chat_api.h"
+#include <iostream>
+
 
 // Callback for cURL write function.
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
@@ -32,6 +34,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
 
     std::string url   = g_OllamaUrl;
     std::string model = g_OllamaModel;
+    std::string sessionCookie = "session=AzerothCoreSession"; // Replace with your actual session cookie value
 
     nlohmann::json requestData = {
         {"model",  model},
@@ -50,6 +53,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBuffer);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_COOKIE, sessionCookie.c_str()); // Add this line to set the session cookie
 
     CURLcode res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
@@ -65,7 +69,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
 
     std::stringstream ss(responseBuffer);
     std::string line;
-    std::ostringstream extractedResponse;
+    std::ostringstream extractedResponse;    
 
     try
     {
@@ -73,7 +77,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
         {
             nlohmann::json jsonResponse = nlohmann::json::parse(line);
             if (jsonResponse.contains("response"))
-                extractedResponse << jsonResponse["response"].get<std::string>();
+                extractedResponse << jsonResponse["response"].get<std::string>();            
         }
     }
     catch (const std::exception& e)
@@ -95,7 +99,7 @@ std::string QueryOllamaAPI(const std::string& prompt)
         return "I'm having trouble understanding.";
     }
 
-    LOG_INFO("server.loading", "Parsed bot response: {}", botReply);
+    LOG_INFO("server.loading", "Parsed bot response: {}", botReply);  
     return botReply;
 }
 

@@ -40,6 +40,7 @@ class OllamaChatConfigWorldScript : public WorldScript
 public:
     OllamaChatConfigWorldScript();
     void OnStartup() override;
+    void OnShutdown() override;
 };
 
 #endif // MOD_OLLAMA_CHAT_CONFIG_H
