@@ -446,11 +446,15 @@ const std::string WOW_CHEATSHEET = R"(
         uint8_t botGenderByte           = bot->getGender();
         std::string botAreaName         = botCurrentArea ? botAI->GetLocalizedAreaName(botCurrentArea): "UnknownArea";
         std::string botZoneName         = botCurrentZone ? botAI->GetLocalizedAreaName(botCurrentZone): "UnknownZone";
+        std::string botMapName          = bot->GetMap() ? bot->GetMap()->GetMapName() : "UnknownMap";
         std::string botClass            = botAI->GetChatHelper()->FormatClass(bot->getClass());
         std::string botRace             = botAI->GetChatHelper()->FormatRace(bot->getRace());
         std::string botRole             = ChatHelper::FormatClass(bot, AiFactory::GetPlayerSpecTab(bot));
         std::string botGender           = (botGenderByte == 0 ? "Male" : "Female");
         std::string botFaction          = (bot->GetTeamId() == TEAM_ALLIANCE ? "Alliance" : "Horde");
+        std::string botGuild            = (bot->GetGuild() ? bot->GetGuild()->GetName() : "No Guild");
+        std::string botGroupStatus      = (bot->GetGroup() ? "In a group" : "Solo");
+        uint32_t botGold                = bot->GetMoney() / 10000;
         std::string playerName          = player->GetName();
         uint32_t playerLevel            = player->GetLevel();
         std::string playerClass         = botAI->GetChatHelper()->FormatClass(player->getClass());
@@ -463,11 +467,17 @@ const std::string WOW_CHEATSHEET = R"(
         std::string playerGroupStatus   = (player->GetGroup() ? "In a group" : "Solo");
         uint32_t playerGold             = player->GetMoney() / 10000;
     
+        float playerDistance = player->IsInWorld() && bot->IsInWorld() ? player->GetDistance(bot) : -1.0f;
+
+        std::string locationInfo = fmt::format("Bot is in area '{}', zone '{}', map '{}'.", botAreaName, botZoneName, botMapName);
+
         std::string extraInfo = fmt::format(
-            "Bot info: Race: {}, Gender: {}, Talent Spec: {}, Faction: {}. "
-            "Player info: Race: {}, Gender: {}, Talent Spec: {}, Faction: {}, Guild: {}, Group: {}, Gold: {}.",
-            botRace, botGender, botRole, botFaction,
-            playerRace, playerGender, playerRole, playerFaction, playerGuild, playerGroupStatus, playerGold
+            "Your info: Race: {}, Gender: {}, Talent Spec: {}, Faction: {}, Guild: {}, Group: {}, Gold: {}. "
+            "Other players info: Race: {}, Gender: {}, Talent Spec: {}, Faction: {}, Guild: {}, Group: {}, Gold: {}. "
+            "Approximate distance between you and other player: {:.1f} yards. {}",
+            botRace, botGender, botRole, botFaction, botGuild, botGroupStatus, botGold,
+            playerRace, playerGender, playerRole, playerFaction, playerGuild, playerGroupStatus, playerGold,
+            playerDistance, locationInfo
         );
     
         const std::string CHEATSHEET_USAGE =
